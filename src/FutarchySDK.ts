@@ -3,7 +3,7 @@
  *
  * @example
  * ```typescript
- * import { FutarchySDK } from '@govex/sdk-v3';
+ * import { FutarchySDK } from 'govex-sdk-v3';
  *
  * // Using bundled deployments (recommended for supported networks)
  * const sdk = new FutarchySDK({ network: 'devnet' });

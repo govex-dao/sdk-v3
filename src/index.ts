@@ -20,7 +20,7 @@
  * ## Quick Start
  *
  * ```typescript
- * import { FutarchySDK } from '@govex/sdk-v3';
+ * import { FutarchySDK } from 'govex-sdk-v3';
  *
  * const sdk = new FutarchySDK({ network: 'mainnet' });
  *

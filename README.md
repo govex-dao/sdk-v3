@@ -9,13 +9,13 @@ TypeScript SDK for the Govex v3 packages on Sui:
 ## Install
 
 ```bash
-npm install @govex/sdk-v3 @mysten/sui
+npm install govex-sdk-v3 @mysten/sui
 ```
 
 ## Use
 
 ```ts
-import { FutarchySDK } from '@govex/sdk-v3';
+import { FutarchySDK } from 'govex-sdk-v3';
 
 const sdk = new FutarchySDK({
   network: 'mainnet',
@@ -34,7 +34,6 @@ The SDK bundles mainnet deployment data in `deployments-processed/_all-packages-
 | `AccountActions` | `0xaa682664f419d51af5071ed0449dffbcf3a417fd12961d916b1a433542e9478d` |
 | `AccountMultisig` | `0x8cc6258e6eb3fa2449316065b4142a557bf6436d0e9c2ec7bc0b1bf46f78a6b1` |
 | `AccountProtocol` | `0x0f6ef484a0867ccffe219fa1f4648e58f8c3fd04a4ddcfb318a27f9cc6d2f3d9` |
-| `conditional_coin` | `0x09a7f63486feb66724c8fdcb264fe5233c66929f8daa7e23e7a8dab00178f8eb` |
 | `futarchy_actions` | `0x12cb3c69cbbfb1e8e647993dd8a83b4624a81c815ee867af8f5c5be3933e0839` |
 | `futarchy_config` | `0x1949b2b186d755e410947a23969abc5b3e2f90cc428b22383a013b4e282123be` |
 | `futarchy_core` | `0xd515e9008496dd209ffb71caf0e5783073385cde00083c8a1437a32093aab95c` |

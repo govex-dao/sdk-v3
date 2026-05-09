@@ -25,7 +25,7 @@
  *
  * @example
  * ```typescript
- * import { ConfigActions, LiquidityActions } from '@govex/sdk-v3/actions';
+ * import { ConfigActions, LiquidityActions } from 'govex-sdk-v3/actions';
  *
  * const specs = [
  *     ConfigActions.updateMetadata({

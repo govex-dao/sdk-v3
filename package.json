@@ -1,5 +1,5 @@
 {
-  "name": "@govex/sdk-v3",
+  "name": "govex-sdk-v3",
   "version": "0.2.0",
   "description": "TypeScript SDK for Govex v3 packages on Sui",
   "type": "module",
@@ -69,6 +69,8 @@
     "futarchy",
     "governance",
     "dao",
+    "multisig",
+    "decision-markets",
     "prediction-markets",
     "typescript",
     "sdk"
