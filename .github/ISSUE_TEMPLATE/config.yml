@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security reports
+    url: mailto:contact@govex.ai
+    about: Please report security vulnerabilities privately.
+

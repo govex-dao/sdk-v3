@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Testing
+coverage/
+.nyc_output/
+
+# Misc
+*.orig
+
+# Auto-generated test data
+test-dao-info.json
+test-proposal-info.json
+conditional-coins-info.json
+test-coins-info.json
+test-dao-info-*.json
+
+# Generated temp packages
+tmp/
+
+# Empty placeholder dirs
+.gen/
+lib/
+/types/

@@ -1,0 +1,86 @@
+{
+  "name": "@govex/futarchy-sdk",
+  "version": "0.2.0",
+  "description": "TypeScript SDK for Govex v3 packages on Sui",
+  "type": "module",
+  "main": "./dist/cjs/index.cjs",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./sdk": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.cjs"
+    },
+    "./workflows": {
+      "types": "./dist/esm/workflows/index.d.ts",
+      "import": "./dist/esm/workflows/index.js",
+      "require": "./dist/cjs/workflows/index.cjs"
+    },
+    "./protocol": {
+      "types": "./dist/esm/protocol/index.d.ts",
+      "import": "./dist/esm/protocol/index.js",
+      "require": "./dist/cjs/protocol/index.cjs"
+    },
+    "./config": {
+      "types": "./dist/esm/config/index.d.ts",
+      "import": "./dist/esm/config/index.js",
+      "require": "./dist/cjs/config/index.cjs"
+    },
+    "./types": {
+      "types": "./dist/esm/types/index.d.ts",
+      "import": "./dist/esm/types/index.js",
+      "require": "./dist/cjs/types/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "deployments-processed/_all-packages-devnet.json",
+    "deployments-processed/_all-packages-testnet.json",
+    "deployments-processed/_all-packages-mainnet.json",
+    "deployments-processed/_all-packages-localnet.json"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/govex-dao/sdk.git"
+  },
+  "homepage": "https://github.com/govex-dao/sdk#readme",
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test:multisig": "npm run build && node --test test/multisig-service.test.mjs",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepack": "npm run clean && npm run build"
+  },
+  "keywords": [
+    "sui",
+    "futarchy",
+    "governance",
+    "dao",
+    "prediction-markets",
+    "typescript",
+    "sdk"
+  ],
+  "author": "Govex",
+  "license": "MIT",
+  "dependencies": {},
+  "peerDependencies": {
+    "@mysten/sui": "1.45.2"
+  },
+  "devDependencies": {
+    "@mysten/sui": "1.45.2",
+    "@types/node": "22.19.7",
+    "tsup": "8.5.1",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
