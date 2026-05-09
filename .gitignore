@@ -43,6 +43,7 @@ test-dao-info-*.json
 
 # Generated temp packages
 tmp/
+*.tgz
 
 # Empty placeholder dirs
 .gen/
