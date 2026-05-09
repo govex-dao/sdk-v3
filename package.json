@@ -1,5 +1,5 @@
 {
-  "name": "@govex/futarchy-sdk",
+  "name": "@govex/sdk-v3",
   "version": "0.2.0",
   "description": "TypeScript SDK for Govex v3 packages on Sui",
   "type": "module",
@@ -33,6 +33,11 @@
       "import": "./dist/esm/config/index.js",
       "require": "./dist/cjs/config/index.cjs"
     },
+    "./actions": {
+      "types": "./dist/esm/actions-unified.d.ts",
+      "import": "./dist/esm/actions-unified.js",
+      "require": "./dist/cjs/actions-unified.cjs"
+    },
     "./types": {
       "types": "./dist/esm/types/index.d.ts",
       "import": "./dist/esm/types/index.js",
@@ -48,9 +53,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/govex-dao/sdk.git"
+    "url": "git+https://github.com/govex-dao/sdk-v3.git"
   },
-  "homepage": "https://github.com/govex-dao/sdk#readme",
+  "homepage": "https://github.com/govex-dao/sdk-v3#readme",
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",

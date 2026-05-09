@@ -9,13 +9,13 @@ TypeScript SDK for the Govex v3 packages on Sui:
 ## Install
 
 ```bash
-npm install @govex/futarchy-sdk @mysten/sui
+npm install @govex/sdk-v3 @mysten/sui
 ```
 
 ## Use
 
 ```ts
-import { FutarchySDK } from '@govex/futarchy-sdk';
+import { FutarchySDK } from '@govex/sdk-v3';
 
 const sdk = new FutarchySDK({
   network: 'mainnet',
