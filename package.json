@@ -1,6 +1,6 @@
 {
   "name": "govex-sdk-v3",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "TypeScript SDK for Govex v3 packages on Sui",
   "type": "module",
   "main": "./dist/cjs/index.cjs",

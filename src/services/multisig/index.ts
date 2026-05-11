@@ -999,6 +999,28 @@ export class MultisigService {
   }
 
   /**
+   * Re-evaluate an active intent against current time bands.
+   *
+   * This lets keepers move delayed approvals from ACTIVE to APPROVED once a
+   * configured time band matures without requiring another vote.
+   */
+  evaluateIntent(tx: Transaction, accountId: string, key: string): Transaction {
+    const pkg = this.packages.accountMultisig;
+    if (!pkg) throw new Error("accountMultisig package not configured");
+
+    tx.moveCall({
+      target: `${pkg}::multisig::evaluate_intent`,
+      arguments: [
+        tx.object(accountId),
+        tx.pure.string(key),
+        tx.object("0x6"), // Clock
+      ],
+    });
+
+    return tx;
+  }
+
+  /**
    * Execute a config change intent.
    * 3-step: execute_intent -> config::execute_config_change -> confirm_execution
    */
@@ -1254,7 +1276,7 @@ export class MultisigService {
 
   /**
    * Confirm execution of an intent (call after all do_* calls).
-   * Uses one-shot confirm: destroys intent immediately instead of re-adding to storage.
+   * Re-adds the completed intent after verifying all actions were processed.
    */
   confirmExecution(
     tx: Transaction,

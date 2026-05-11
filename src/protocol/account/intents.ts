@@ -226,40 +226,7 @@ export class Intents {
   }
 
   // ============================================================================
-  // ACTION SPEC CREATION (2)
-  // ============================================================================
-
-  /**
-   * Create a new ActionSpec with TypeName directly
-   * @param tx - Transaction instance
-   * @param accountProtocolPackageId - The account protocol package ID
-   * @param config - Configuration object
-   * @param config.actionType - TypeName of the action
-   * @param config.actionData - BCS-serialized action data
-   * @param config.version - Action version (default: 1)
-   * @returns The ActionSpec
-   */
-  static newActionSpecWithTypename(
-    tx: Transaction,
-    accountProtocolPackageId: string,
-    config: {
-      actionType: ReturnType<Transaction['moveCall']>;
-      actionData: number[];
-      version: number;
-    }
-  ): ReturnType<Transaction['moveCall']> {
-    return tx.moveCall({
-      target: TransactionUtils.buildTarget(accountProtocolPackageId, 'intents', 'new_action_spec_with_typename'),
-      arguments: [
-        config.actionType,
-        tx.pure(new Uint8Array(config.actionData)),
-        tx.pure.u8(config.version),
-      ],
-    });
-  }
-
-  // ============================================================================
-  // ACTION SPEC MANAGEMENT (4)
+  // ACTION SPEC MANAGEMENT (3)
   // ============================================================================
 
   /**
@@ -294,42 +261,6 @@ export class Intents {
       arguments: [
         intent,
         actionTypeWitness,
-        tx.pure(new Uint8Array(actionDataBytes)),
-        intentWitness,
-      ],
-    });
-  }
-
-  /**
-   * Add action spec with TypeName directly (for replaying stored init intents)
-   * @param tx - Transaction instance
-   * @param accountProtocolPackageId - The account protocol package ID
-   * @param config - Configuration object
-   * @param config.outcomeType - Type parameter for the intent outcome
-   * @param config.intentWitnessType - Type parameter for the intent witness (drop)
-   * @param intent - The Intent object
-   * @param actionType - The TypeName of the action
-   * @param actionDataBytes - BCS-serialized action data
-   * @param intentWitness - The intent witness
-   */
-  static addActionSpecWithTypename(
-    tx: Transaction,
-    accountProtocolPackageId: string,
-    config: {
-      outcomeType: string;
-      intentWitnessType: string;
-    },
-    intent: ReturnType<Transaction['moveCall']>,
-    actionType: ReturnType<Transaction['moveCall']>,
-    actionDataBytes: number[],
-    intentWitness: ReturnType<Transaction['moveCall']>
-  ): void {
-    tx.moveCall({
-      target: TransactionUtils.buildTarget(accountProtocolPackageId, 'intents', 'add_action_spec_with_typename'),
-      typeArguments: [config.outcomeType, config.intentWitnessType],
-      arguments: [
-        intent,
-        actionType,
         tx.pure(new Uint8Array(actionDataBytes)),
         intentWitness,
       ],
