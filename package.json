@@ -62,6 +62,7 @@
     "test:multisig": "npm run build && node --test test/multisig-service.test.mjs",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
+    "prepare": "npm run build",
     "prepack": "npm run clean && npm run build"
   },
   "keywords": [
