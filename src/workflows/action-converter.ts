@@ -165,6 +165,17 @@ const BcsConditionalMetadata = bcs.struct('ConditionalMetadata', {
   coin_icon_url: BcsUrl,
 });
 
+const BcsLockTreasuryCapAction = bcs.struct('LockTreasuryCapAction', {
+  has_max_supply: bcs.bool(),
+  max_supply: bcs.u64(),
+  can_mint: bcs.bool(),
+  can_burn: bcs.bool(),
+  can_update_name: bcs.bool(),
+  can_update_description: bcs.bool(),
+  can_update_icon: bcs.bool(),
+  resource_name: bcs.string(),
+});
+
 function bcsTypeForParam(type: string): BcsType<any, any> {
   switch (type) {
     case 'u8':
@@ -227,6 +238,18 @@ function normalizeBcsValue(value: any): any {
 function decodeActionDataParams(action: IndexedAction, def: ActionDefinition): Record<string, any> | null {
   const bytes = actionDataBytes(action);
   if (!bytes) return null;
+  if (def.id === 'lock_treasury_cap') {
+    const parsed = BcsLockTreasuryCapAction.parse(bytes);
+    return {
+      maxSupply: parsed.has_max_supply ? normalizeBcsValue(parsed.max_supply) : undefined,
+      canMint: parsed.can_mint,
+      canBurn: parsed.can_burn,
+      canUpdateName: parsed.can_update_name,
+      canUpdateDescription: parsed.can_update_description,
+      canUpdateIcon: parsed.can_update_icon,
+      resourceName: parsed.resource_name,
+    };
+  }
   if (def.params.length === 0) return {};
 
   const fields: Record<string, BcsType<any, any>> = {};
@@ -295,8 +318,15 @@ function isDepositRaiseFundsType(fullType: string): boolean {
 function buildConfig(def: ActionDefinition, params: Record<string, any>, typeArgs: string[], coinType?: string): IntentActionConfig {
   const { id, typeParams } = def;
 
-  // Build config with action ID
+  // Build config with action ID and decoded ActionSpec params.
+  // Execution only needs some params directly (runtime object IDs, resource names),
+  // but preserving all decoded params keeps auto-execution aligned with staged specs.
   const config: Record<string, any> = { action: id };
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined) {
+      config[key] = value;
+    }
+  }
 
   // Check if this action needs type parameters
   if (typeParams && typeParams.length > 0) {
@@ -342,6 +372,15 @@ function buildConfig(def: ActionDefinition, params: Record<string, any>, typeArg
     if (!config.currencyId) {
       throw new ActionConversionError(id, 'currencyId not found (Currency<CoinType> shared object required)');
     }
+  }
+
+  // Some execution helpers accept `externalArg` as a runtime object handle while
+  // the staged ActionSpec stores the same object under a more specific field.
+  if (id === 'withdraw_object' && !config.externalArg && config.objectId) {
+    config.externalArg = config.objectId;
+  }
+  if (id === 'lock_upgrade_cap' && !config.externalArg && config.expectedCapId) {
+    config.externalArg = config.expectedCapId;
   }
 
   return config as IntentActionConfig;

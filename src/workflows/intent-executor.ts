@@ -371,20 +371,19 @@ export class IntentExecutor {
 
       case 'collect_stream': {
         const streamCapId = action.streamCapId ?? action.externalArg;
-        if (!streamCapId) {
-          throw new Error('collect_stream requires streamCapId or externalArg (StreamCap object ID)');
+        if (streamCapId) {
+          tx.moveCall({
+            target: `${accountProtocolPackageId}::owned::do_provide_object`,
+            typeArguments: [outcomeType, `${accountActionsPackageId}::vault::StreamCap`, witnessType],
+            arguments: [
+              executable,
+              txObject(tx, config.accountId),
+              tx.object(packageRegistryId),
+              intentWitness,
+              tx.object(streamCapId),
+            ],
+          });
         }
-        tx.moveCall({
-          target: `${accountProtocolPackageId}::owned::do_provide_object`,
-          typeArguments: [outcomeType, `${accountActionsPackageId}::vault::StreamCap`, witnessType],
-          arguments: [
-            executable,
-            txObject(tx, config.accountId),
-            tx.object(packageRegistryId),
-            intentWitness,
-            tx.object(streamCapId),
-          ],
-        });
         tx.moveCall({
           target: `${accountActionsPackageId}::vault::do_collect_stream`,
           typeArguments: [configType, outcomeType, action.coinType, witnessType],
@@ -599,20 +598,19 @@ export class IntentExecutor {
         break;
 
       case 'lock_treasury_cap':
-        if (!action.externalArg) {
-          throw new Error('lock_treasury_cap requires externalArg (treasury cap object ID)');
+        if (action.externalArg) {
+          tx.moveCall({
+            target: `${accountProtocolPackageId}::owned::do_provide_object`,
+            typeArguments: [outcomeType, `0x2::coin::TreasuryCap<${action.coinType}>`, witnessType],
+            arguments: [
+              executable,
+              txObject(tx, config.accountId),
+              tx.object(packageRegistryId),
+              intentWitness,
+              tx.object(action.externalArg),
+            ],
+          });
         }
-        tx.moveCall({
-          target: `${accountProtocolPackageId}::owned::do_provide_object`,
-          typeArguments: [outcomeType, `0x2::coin::TreasuryCap<${action.coinType}>`, witnessType],
-          arguments: [
-            executable,
-            txObject(tx, config.accountId),
-            tx.object(packageRegistryId),
-            intentWitness,
-            tx.object(action.externalArg),
-          ],
-        });
         tx.moveCall({
           target: `${accountActionsPackageId}::currency::do_init_lock_treasury_cap`,
           typeArguments: [configType, outcomeType, action.coinType, witnessType],
@@ -626,20 +624,19 @@ export class IntentExecutor {
         break;
 
       case 'lock_metadata_cap':
-        if (!action.externalArg) {
-          throw new Error('lock_metadata_cap requires externalArg (metadata cap object ID)');
+        if (action.externalArg) {
+          tx.moveCall({
+            target: `${accountProtocolPackageId}::owned::do_provide_object`,
+            typeArguments: [outcomeType, `0x2::coin_registry::MetadataCap<${action.coinType}>`, witnessType],
+            arguments: [
+              executable,
+              txObject(tx, config.accountId),
+              tx.object(packageRegistryId),
+              intentWitness,
+              tx.object(action.externalArg),
+            ],
+          });
         }
-        tx.moveCall({
-          target: `${accountProtocolPackageId}::owned::do_provide_object`,
-          typeArguments: [outcomeType, `0x2::coin_registry::MetadataCap<${action.coinType}>`, witnessType],
-          arguments: [
-            executable,
-            txObject(tx, config.accountId),
-            tx.object(packageRegistryId),
-            intentWitness,
-            tx.object(action.externalArg),
-          ],
-        });
         tx.moveCall({
           target: `${accountActionsPackageId}::currency::do_init_lock_metadata_cap`,
           typeArguments: [configType, outcomeType, action.coinType, witnessType],
@@ -654,21 +651,21 @@ export class IntentExecutor {
 
       case 'lock_upgrade_cap':
         // LockUpgradeCap now takes the cap from executable_resources.
-        // The execution PTB still has to provide the UpgradeCap first.
-        if (!action.externalArg) {
-          throw new Error('lock_upgrade_cap requires externalArg (upgrade cap object ID)');
+        // Manual execution configs can provide it here; auto-converted staged
+        // specs may have a separate ProvideObjectToResources action first.
+        if (action.externalArg) {
+          tx.moveCall({
+            target: `${accountProtocolPackageId}::owned::do_provide_object`,
+            typeArguments: [outcomeType, '0x2::package::UpgradeCap', witnessType],
+            arguments: [
+              executable,
+              txObject(tx, config.accountId),
+              tx.object(packageRegistryId),
+              intentWitness,
+              tx.object(action.externalArg),
+            ],
+          });
         }
-        tx.moveCall({
-          target: `${accountProtocolPackageId}::owned::do_provide_object`,
-          typeArguments: [outcomeType, '0x2::package::UpgradeCap', witnessType],
-          arguments: [
-            executable,
-            txObject(tx, config.accountId),
-            tx.object(packageRegistryId),
-            intentWitness,
-            tx.object(action.externalArg),
-          ],
-        });
         tx.moveCall({
           target: `${accountActionsPackageId}::package_upgrade::do_init_lock_upgrade_cap`,
           typeArguments: [outcomeType, witnessType],

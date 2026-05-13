@@ -13,6 +13,20 @@ import { Transaction } from "@mysten/sui/transactions";
 import type { ServiceParams } from "../types";
 import { getActionByFullType } from "../../config/action-definitions";
 
+export const MULTISIG_TREASURY_VAULT_NAME = "treasury";
+export const SUI_MAINNET_USDC_COIN_TYPE =
+  "0xdba34672e30cb065b1f93e3ab55318768fd6fef66c15942c9f7cb846e2f900e7::usdc::USDC";
+export const SUI_TESTNET_USDC_COIN_TYPE =
+  "0xa1ec7fc00a6f40db9693ad1415d0c193ad3906494428cf252621037bd7117e29::usdc::USDC";
+
+export function getDefaultMultisigTreasuryCoinType(
+  network?: ServiceParams["network"],
+): string {
+  return network === "testnet"
+    ? SUI_TESTNET_USDC_COIN_TYPE
+    : SUI_MAINNET_USDC_COIN_TYPE;
+}
+
 export interface MultisigTimeBandInput {
   afterMs: bigint | number;
   weight: bigint | number;
@@ -56,6 +70,12 @@ export interface MultisigConfigInput {
 
 export interface CreateMultisigAccountParams extends MultisigConfigInput {
   metadata?: Record<string, string>;
+  /**
+   * Coin type to approve on the creation-time treasury vault. Defaults to
+   * Circle's official Sui USDC for mainnet/testnet. Pass this explicitly for
+   * local or custom deployments.
+   */
+  treasuryCoinType?: string;
 }
 
 interface ProposeConfigChangeBaseParams {
@@ -681,11 +701,13 @@ export class MultisigService {
   private client: SuiClient;
   private packages: ServiceParams["packages"];
   private sharedObjects: ServiceParams["sharedObjects"];
+  private network?: ServiceParams["network"];
 
   constructor(params: ServiceParams) {
     this.client = params.client;
     this.packages = params.packages;
     this.sharedObjects = params.sharedObjects;
+    this.network = params.network;
   }
 
   // ========================================================================
@@ -694,7 +716,8 @@ export class MultisigService {
 
   /**
    * Create a new multisig account.
-   * Returns a transaction that calls multisig::new_account + multisig::share.
+   * Returns a transaction that calls multisig::new_account, initializes the
+   * treasury vault with USDC approval, then calls multisig::share.
    */
   createAccount(
     tx: Transaction,
@@ -702,16 +725,20 @@ export class MultisigService {
     params: CreateMultisigAccountParams,
   ): Transaction {
     const pkg = this.packages.accountMultisig;
+    const actionsPackage = this.packages.accountActions;
     const feeVault = this.sharedObjects.multisigFeeVault;
     const registryId = this.sharedObjects.packageRegistry.id;
 
     if (!pkg) throw new Error("accountMultisig package not configured");
+    if (!actionsPackage) throw new Error("accountActions package not configured");
     if (!feeVault)
       throw new Error("multisigFeeVault shared object not configured");
 
     const keys = Object.keys(params.metadata ?? {});
     const values = Object.values(params.metadata ?? {});
     const configArgs = normalizeConfigInput(params);
+    const treasuryCoinType =
+      params.treasuryCoinType ?? getDefaultMultisigTreasuryCoinType(this.network);
 
     const account = tx.moveCall({
       target: `${pkg}::multisig::new_account`,
@@ -802,6 +829,12 @@ export class MultisigService {
         ),
         tx.pure.u64(configArgs.intentExpiryMs),
       ],
+    });
+
+    tx.moveCall({
+      target: `${actionsPackage}::vault::init_treasury_vault_with_coin_type`,
+      typeArguments: [treasuryCoinType],
+      arguments: [account, tx.object(registryId)],
     });
 
     tx.moveCall({

@@ -148,7 +148,7 @@ sdk.multisig.rejectIntent(tx, accountId, "fund-team");
 await client.signAndExecuteTransaction({ transaction: tx, signer });
 ```
 
-Vote Against uses `cancelPolicy` paths and the configured group time bands. It can also be cast after an intent is approved but before execution; if the old approval quorum no longer holds, the intent returns to Active, and if the vote-against side satisfies `cancelPolicy`, it becomes Cancel Unlocked.
+Vote Against uses `cancelPolicy` paths. Time bands are considered only for approvals, never for rejections. A reject vote can also be cast after an intent is approved but before execution; if the old approval quorum no longer holds, the intent returns to Active, and if the vote-against side satisfies `cancelPolicy`, it becomes Cancel Unlocked.
 
 ---
 

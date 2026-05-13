@@ -9,6 +9,8 @@
 import type { SuiClient } from '@mysten/sui/client';
 import type { Packages, SharedObjects } from '../types';
 
+export type ServiceNetwork = 'mainnet' | 'testnet' | 'devnet' | 'localnet';
+
 /**
  * Service initialization params - shared by all services
  */
@@ -16,6 +18,7 @@ export interface ServiceParams {
   client: SuiClient;
   packages: Packages;
   sharedObjects: SharedObjects;
+  network?: ServiceNetwork;
 }
 
 /**

@@ -8,7 +8,7 @@
  */
 
 // Shared service types
-export type { ServiceParams, SwapConfig } from './types';
+export type { ServiceNetwork, ServiceParams, SwapConfig } from './types';
 
 // Domain services - explicit exports to avoid conflicts
 export { DAOService, DAOInfoHelper, VaultService, OracleService } from './dao';
@@ -57,11 +57,15 @@ export * from './dissolution-actions';
 export * from './coin-registry';
 export * from './markets';
 export {
+  getDefaultMultisigTreasuryCoinType,
   isMultisigConfigChangeActionType,
   isSingleMultisigConfigChangeAction,
+  MULTISIG_TREASURY_VAULT_NAME,
   MULTISIG_INTENT_STATUS,
   MULTISIG_TERMINAL_INTENT_STATUSES,
   MultisigService,
+  SUI_MAINNET_USDC_COIN_TYPE,
+  SUI_TESTNET_USDC_COIN_TYPE,
   type ActionExecutionRequirement,
   type ActionExecutionRequirementKind,
   type DiscoverExecutionInputsParams,

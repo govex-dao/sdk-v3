@@ -264,6 +264,7 @@ export class FutarchySDK {
       client: this.client,
       packages: this.packages,
       sharedObjects: this.sharedObjects,
+      network: networkConfig.network === 'custom' ? undefined : networkConfig.network,
     };
 
     this.admin = new AdminService(params);

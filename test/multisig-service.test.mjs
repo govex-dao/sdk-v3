@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { Transaction } from "@mysten/sui/transactions";
 import {
   isMultisigConfigChangeActionType,
   isSingleMultisigConfigChangeAction,
@@ -48,6 +49,25 @@ test("config-change action helpers match account_multisig package ids", () => {
     ),
     false,
   );
+});
+
+test("evaluateIntent wraps account_multisig::multisig::evaluate_intent", () => {
+  const service = new MultisigService({
+    client: {},
+    packages: { accountMultisig: ACCOUNT_MULTISIG_PACKAGE },
+    sharedObjects: { packageRegistry: { id: "0x1" } },
+  });
+
+  const tx = new Transaction();
+  service.evaluateIntent(tx, "0x1", "delayed-intent");
+
+  const [command] = tx.getData().commands;
+  const moveCall = command.MoveCall;
+  assert.equal(
+    `${moveCall.package}::${moveCall.module}::${moveCall.function}`,
+    `${ACCOUNT_MULTISIG_PACKAGE}::multisig::evaluate_intent`,
+  );
+  assert.equal(moveCall.arguments.length, 3);
 });
 
 test("generic actions helper blocks account_multisig ConfigChange specs", () => {

@@ -10,7 +10,7 @@
  * 4. lock_and_share_raise (consumes UnsharedRaise)
  *
  * SALE PERIOD:
- * 5. Contribute directly, buy from a bonding curve, or submit a CCA bid
+ * 5. Contribute directly or accept a reserved allocation
  *
  * RAISE COMPLETION:
  * Tx1: completeRaise() - settle + create_completion_intents
@@ -53,6 +53,12 @@ import { assertProtectiveBidActionOrdering } from './action-dependencies';
 // - 80% of EXCESS (above min) goes to the protective bid wall
 const DEFAULT_AMM_PERCENT_OF_RAISE_BPS = 2000n;
 const DEFAULT_BID_WALL_PERCENT_OF_EXCESS_BPS = 8000n;
+
+function unsupportedLaunchpadChannel(channel: string): never {
+  throw new Error(
+    `${channel} launchpad channel is not supported by the current futarchy_factory Move package`
+  );
+}
 
 /**
  * Helper to convert ObjectIdOrRef to transaction object argument.
@@ -211,6 +217,13 @@ export class LaunchpadWorkflow {
       config.ammPercentOfRaiseBps ?? DEFAULT_AMM_PERCENT_OF_RAISE_BPS;
     const bidWallPercentOfExcessBps =
       config.bidWallPercentOfExcessBps ?? DEFAULT_BID_WALL_PERCENT_OF_EXCESS_BPS;
+
+    if (config.bondingCurve) {
+      unsupportedLaunchpadChannel('Bonding curve');
+    }
+    if (config.continuousClearingAuction) {
+      unsupportedLaunchpadChannel('Continuous clearing auction');
+    }
 
     const { accountActionsPackageId, futarchyFactoryPackageId } = this.packages;
     const {
@@ -431,7 +444,7 @@ export class LaunchpadWorkflow {
     if (config.reservations && config.reservations.length > 0) {
       for (const reservation of config.reservations) {
         tx.moveCall({
-          target: `${futarchyFactoryPackageId}::launchpad_reservations::add_reservation`,
+          target: `${futarchyFactoryPackageId}::launchpad::add_reservation`,
           typeArguments: [config.assetType, config.stableType],
           arguments: [
             unsharedRaise,
@@ -440,34 +453,6 @@ export class LaunchpadWorkflow {
           ],
         });
       }
-    }
-
-    // 4c. Optional bonding curve channel (before lock)
-    if (config.bondingCurve) {
-      tx.moveCall({
-        target: `${futarchyFactoryPackageId}::launchpad_bonding_curve::configure`,
-        typeArguments: [config.assetType, config.stableType],
-        arguments: [
-          unsharedRaise,
-          tx.pure.u64(config.bondingCurve.tokenBudget),
-          tx.pure.u64(config.bondingCurve.startPrice),
-          tx.pure.u64(config.bondingCurve.endPrice),
-        ],
-      });
-    }
-
-    // 4d. Optional continuous-clearing auction channel (before lock)
-    if (config.continuousClearingAuction) {
-      tx.moveCall({
-        target: `${futarchyFactoryPackageId}::launchpad_cca::configure`,
-        typeArguments: [config.assetType, config.stableType],
-        arguments: [
-          unsharedRaise,
-          tx.pure.u64(config.continuousClearingAuction.tokenBudget),
-          tx.pure.u64(config.continuousClearingAuction.maxPrice),
-          tx.pure.u64(config.continuousClearingAuction.floorPrice),
-        ],
-      });
     }
 
     // 5. Lock intents and share raise (consumes UnsharedRaise)
@@ -1096,7 +1081,7 @@ export class LaunchpadWorkflow {
 
     if (reservationAmount > 0n) {
       tx.moveCall({
-        target: `${futarchyFactoryPackageId}::launchpad_reservations::accept_reservation`,
+        target: `${futarchyFactoryPackageId}::launchpad::accept_reservation`,
         typeArguments: [config.assetType, config.stableType],
         arguments: [
           txObject(tx, config.raiseId),
@@ -1131,181 +1116,43 @@ export class LaunchpadWorkflow {
   /**
    * Buy an exact token amount from the bonding curve channel.
    */
-  buyFromBondingCurve(config: BondingCurveBuyConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const clockId = config.clockId || '0x6';
-    const { futarchyFactoryPackageId } = this.packages;
-
-    const coinObjects = config.stableCoins.map((id) => tx.object(id));
-    const [firstCoin, ...restCoins] = coinObjects;
-
-    if (restCoins.length > 0) {
-      tx.mergeCoins(firstCoin, restCoins);
-    }
-
-    const [paymentCoin] = tx.splitCoins(firstCoin, [tx.pure.u64(config.maxStableAmount)]);
-    const [protocolFeeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(config.protocolFee)]);
-
-    tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_bonding_curve::buy_tokens`,
-      typeArguments: [config.assetType, config.stableType],
-      arguments: [
-        txObject(tx, config.raiseId),
-        txObject(tx, config.feeManagerId),
-        paymentCoin,
-        protocolFeeCoin,
-        tx.pure.u64(config.tokenAmount),
-        tx.object(clockId),
-      ],
-    });
-
-    return {
-      transaction: tx,
-      description: `Buy ${config.tokenAmount} from bonding curve`,
-    };
+  buyFromBondingCurve(_config: BondingCurveBuyConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Bonding curve');
   }
 
   /**
    * Submit stable-denominated CCA demand at a max price.
    */
-  submitCCABid(config: CCABidConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const clockId = config.clockId || '0x6';
-    const { futarchyFactoryPackageId } = this.packages;
-
-    const coinObjects = config.stableCoins.map((id) => tx.object(id));
-    const [firstCoin, ...restCoins] = coinObjects;
-
-    if (restCoins.length > 0) {
-      tx.mergeCoins(firstCoin, restCoins);
-    }
-
-    const [paymentCoin] = tx.splitCoins(firstCoin, [tx.pure.u64(config.stableAmount)]);
-    const [protocolFeeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(config.protocolFee)]);
-
-    tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_cca::submit_bid`,
-      typeArguments: [config.assetType, config.stableType],
-      arguments: [
-        txObject(tx, config.raiseId),
-        txObject(tx, config.feeManagerId),
-        paymentCoin,
-        protocolFeeCoin,
-        tx.pure.u64(config.maxPrice),
-        tx.pure.u64(config.stableAmount),
-        tx.object(clockId),
-      ],
-    });
-
-    return {
-      transaction: tx,
-      description: `Submit CCA bid for ${config.stableAmount}`,
-    };
+  submitCCABid(_config: CCABidConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Continuous clearing auction');
   }
 
   /**
    * Checkpoint the live CCA clearing price.
    */
-  checkpointCCA(config: CCACheckpointConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const clockId = config.clockId || '0x6';
-    const { futarchyFactoryPackageId } = this.packages;
-
-    tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_cca::checkpoint`,
-      typeArguments: [config.assetType, config.stableType],
-      arguments: [
-        txObject(tx, config.raiseId),
-        tx.pure.vector('u64', config.priceTicksDesc),
-        tx.object(clockId),
-      ],
-    });
-
-    return {
-      transaction: tx,
-      description: `Checkpoint CCA`,
-    };
+  checkpointCCA(_config: CCACheckpointConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Continuous clearing auction');
   }
 
   /**
    * Finalize CCA after the raise deadline.
    */
-  finalizeCCA(config: CCAFinalizeConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const clockId = config.clockId || '0x6';
-    const { futarchyFactoryPackageId } = this.packages;
-
-    tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_cca::finalize_auction`,
-      typeArguments: [config.assetType, config.stableType],
-      arguments: [
-        txObject(tx, config.raiseId),
-        tx.pure.vector('u64', config.priceTicksDesc),
-        tx.object(clockId),
-      ],
-    });
-
-    return {
-      transaction: tx,
-      description: `Finalize CCA`,
-    };
+  finalizeCCA(_config: CCAFinalizeConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Continuous clearing auction');
   }
 
   /**
    * Settle a finalized CCA bid. If bidder is omitted, settles sender's bid.
    */
-  settleCCABid(config: CCASettleBidConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const { futarchyFactoryPackageId } = this.packages;
-
-    if (config.bidder) {
-      tx.moveCall({
-        target: `${futarchyFactoryPackageId}::launchpad_cca::settle_bid_for`,
-        typeArguments: [config.assetType, config.stableType],
-        arguments: [
-          txObject(tx, config.raiseId),
-          tx.pure.address(config.bidder),
-        ],
-      });
-    } else {
-      tx.moveCall({
-        target: `${futarchyFactoryPackageId}::launchpad_cca::settle_bid`,
-        typeArguments: [config.assetType, config.stableType],
-        arguments: [
-          txObject(tx, config.raiseId),
-        ],
-      });
-    }
-
-    return {
-      transaction: tx,
-      description: config.bidder
-        ? `Settle CCA bid for ${config.bidder}`
-        : `Settle CCA bid`,
-    };
+  settleCCABid(_config: CCASettleBidConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Continuous clearing auction');
   }
 
   /**
    * Cancel sender's out-of-range CCA bid.
    */
-  cancelCCABid(config: CCACancelBidConfig): WorkflowTransaction {
-    const tx = new Transaction();
-    const clockId = config.clockId || '0x6';
-    const { futarchyFactoryPackageId } = this.packages;
-
-    tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_cca::cancel_bid`,
-      typeArguments: [config.assetType, config.stableType],
-      arguments: [
-        txObject(tx, config.raiseId),
-        tx.object(clockId),
-      ],
-    });
-
-    return {
-      transaction: tx,
-      description: `Cancel CCA bid`,
-    };
+  cancelCCABid(_config: CCACancelBidConfig): WorkflowTransaction {
+    return unsupportedLaunchpadChannel('Continuous clearing auction');
   }
 
   // ============================================================================
@@ -1336,7 +1183,7 @@ export class LaunchpadWorkflow {
     const [protocolFeeCoin] = tx.splitCoins(tx.gas, [tx.pure.u64(config.protocolFee)]);
 
     tx.moveCall({
-      target: `${futarchyFactoryPackageId}::launchpad_reservations::accept_reservation`,
+      target: `${futarchyFactoryPackageId}::launchpad::accept_reservation`,
       typeArguments: [config.assetType, config.stableType],
       arguments: [
         txObject(tx, config.raiseId),
